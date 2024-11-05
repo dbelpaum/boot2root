@@ -247,3 +247,521 @@ We can now connect to laurie account by ssh after hashing `Iheartpwnage` with `e
 ![alt text](image-6.png)
 
 On her home we find a `bomb` binary file and a `README` telling us to defuse the bomb in order to connect to the user `thor`
+
+# BOMB Reversing Writeup
+
+We first use ghidra to give the pseudo C that'll make it easier for us.
+Then, we are presented with a main with what seems to be 6 inputs that needs to be validated by 6 functions,
+
+Here :
+```c
+int main(int argc,char **argv)
+
+{
+  undefined4 uVar1;
+  int in_stack_00000004;
+  undefined4 *in_stack_00000008;
+  
+  if (in_stack_00000004 == 1) {
+    infile = stdin;
+  }
+  else {
+    if (in_stack_00000004 != 2) {
+      printf("Usage: %s [<input_file>]\n",*in_stack_00000008);
+                    // WARNING: Subroutine does not return
+      exit(8);
+    }
+    infile = (_IO_FILE *)fopen((char *)in_stack_00000008[1],"r");
+    if ((FILE *)infile == (FILE *)0x0) {
+      printf("%s: Error: Couldn\'t open %s\n",*in_stack_00000008,in_stack_00000008[1]);
+                    // WARNING: Subroutine does not return
+      exit(8);
+    }
+  }
+  initialize_bomb(argv);
+  printf("Welcome this is my little bomb !!!! You have 6 stages with\n");
+  printf("only one life good luck !! Have a nice day!\n");
+  uVar1 = read_line();
+  phase_1(uVar1);
+  phase_defused();
+  printf("Phase 1 defused. How about the next one?\n");
+  uVar1 = read_line();
+  phase_2(uVar1);
+  phase_defused();
+  printf("That\'s number 2.  Keep going!\n");
+  uVar1 = read_line();
+  phase_3(uVar1);
+  phase_defused();
+  printf("Halfway there!\n");
+  uVar1 = read_line();
+  phase_4(uVar1);
+  phase_defused();
+  printf("So you got that one.  Try this one.\n");
+  uVar1 = read_line();
+  phase_5(uVar1);
+  phase_defused();
+  printf("Good work!  On to the next...\n");
+  uVar1 = read_line();
+  phase_6(uVar1);
+  phase_defused();
+  return 0;
+}
+```
+
+# Phase 1
+
+The first phase is straight forward as it just compares the input with a string `Public speaking is very easy.`
+
+```c
+void phase_1(undefined4 param_1)
+
+{
+  int iVar1;
+  
+  iVar1 = strings_not_equal(param_1,"Public speaking is very easy.");
+  if (iVar1 != 0) {
+    explode_bomb();
+  }
+  return;
+}
+```
+
+So we have our first input and we can also use pwntools to automate everything.
+
+```py
+from pwn import *
+import ctypes
+
+r = process('./bomb')
+pass1 = "Public speaking is very easy."
+print(r.recv().decode())
+r.sendline(pass1.encode())
+print(r.recv().decode())
+```
+
+We get a positive response and we're allowed to move on to phase 2.
+
+## Phase 2
+
+```c
+void phase_2(undefined4 param_1)
+
+{
+  int iVar1;
+  int aiStack_20 [7];
+  
+  read_six_numbers(param_1,aiStack_20 + 1);
+  if (aiStack_20[1] != 1) {
+    explode_bomb();
+  }
+  iVar1 = 1;
+  do {
+    if (aiStack_20[iVar1 + 1] != (iVar1 + 1) * aiStack_20[iVar1]) {
+      explode_bomb();
+    }
+    iVar1 = iVar1 + 1;
+  } while (iVar1 < 6);
+  return;
+}
+```
+
+The phase_2 function takes in 6 space separated numbers and computes this comparison.
+
+```py
+aiStack_20[iVar1 + 1] != (iVar1 + 1) * aiStack_20[iVar1]
+```
+
+Which is just means that the next number is equal to the last number times the index + 1. And we just need to compute the same thing and send it to the input :
+
+```py
+numbers = [1, 0, 0, 0, 0, 0, 0]
+for i in range(0,6):
+    numbers[i + 1] = numbers[i] * (i + 1)
+pass2 = " ".join([str(i) for i in numbers[1:]])
+print(pass2)
+r.sendline(pass2.encode())
+print(r.recv().decode())
+```
+
+Good, onto the next phase.
+
+## Phase 3
+
+```c
+void phase_3(char *param_1)
+
+{
+  int iVar1;
+  char cVar2;
+  undefined4 local_10;
+  char local_9;
+  int local_8;
+  
+  iVar1 = sscanf(param_1,"%d %c %d",&local_10,&local_9,&local_8);
+  if (iVar1 < 3) {
+    explode_bomb();
+  }
+  switch(local_10) {
+  case 0:
+    cVar2 = 'q';
+    if (local_8 != 0x309) {
+      explode_bomb();
+    }
+    break;
+  case 1:
+    cVar2 = 'b';
+    if (local_8 != 0xd6) {
+      explode_bomb();
+    }
+    break;
+  case 2:
+    cVar2 = 'b';
+    if (local_8 != 0x2f3) {
+      explode_bomb();
+    }
+    break;
+  case 3:
+    cVar2 = 'k';
+    if (local_8 != 0xfb) {
+      explode_bomb();
+    }
+    break;
+  case 4:
+    cVar2 = 'o';
+    if (local_8 != 0xa0) {
+      explode_bomb();
+    }
+    break;
+  case 5:
+    cVar2 = 't';
+    if (local_8 != 0x1ca) {
+      explode_bomb();
+    }
+    break;
+  case 6:
+    cVar2 = 'v';
+    if (local_8 != 0x30c) {
+      explode_bomb();
+    }
+    break;
+  case 7:
+    cVar2 = 'b';
+    if (local_8 != 0x20c) {
+      explode_bomb();
+    }
+    break;
+  default:
+    cVar2 = 'x';
+    explode_bomb();
+  }
+  if (cVar2 != local_9) {
+    explode_bomb();
+  }
+  return;
+}
+```
+
+Phase 3 is straightforward. We have to choose to figure out the input and the flow that doesn't explode the bomb. For that, we read the code in reverse order and figure out that :
+- cVar2 has to be equal to local_9 (second argument)
+- Depending on local_10 (first agument), local_8 has to be equal to a certain value.
+
+There are multiple solutions but we'll stick with the outcome when we chose 1 has first argument which will give us `1 b 214`.
+
+```py
+pass3 = f'{1} {"b"} {0xd6}'
+r.sendline(pass3.encode())
+print(r.recv().decode())
+```
+
+Onto the next phase.
+
+## Phase 4
+
+```c
+void phase_4(char *param_1)
+
+{
+  int iVar1;
+  int local_8;
+  
+  iVar1 = sscanf(param_1,"%d",&local_8);
+  if ((iVar1 != 1) || (local_8 < 1)) {
+    explode_bomb();
+  }
+  iVar1 = func4(local_8);
+  if (iVar1 != 0x37) {
+    explode_bomb();
+  }
+  return;
+}
+```
+
+Phase 4 just checks that the output of func4 given the number input is equal to 0x37 which is 55 in base 10.
+
+```c
+int func4(int param_1)
+{
+  int iVar1;
+  int iVar2;
+  
+  if (param_1 < 2) {
+    iVar2 = 1;
+  }
+  else {
+    iVar1 = func4(param_1 + -1);
+    iVar2 = func4(param_1 + -2);
+    iVar2 = iVar2 + iVar1;
+  }
+  return iVar2;
+}
+```
+
+This function returns the nth Fibonacci number and all we need to do is find the index that gives 55. And we just google it, it's the 9th.
+
+```py
+pass4 = f'{9} austinpowers'
+r.sendline(pass4.encode())
+print(r.recv().decode())
+```
+
+We put austinpowers because of the last step which we'll get to later. Onto the next one.
+
+## Phase 5
+
+```c
+void phase_5(int param_1)
+
+{
+  int iVar1;
+  undefined local_c [6];
+  undefined local_6;
+  
+  iVar1 = string_length(param_1);
+  if (iVar1 != 6) {
+    explode_bomb();
+  }
+  iVar1 = 0;
+  do {
+    local_c[iVar1] = (&array_123)[(char)(*(byte *)(iVar1 + param_1) & 0xf)];
+    iVar1 = iVar1 + 1;
+  } while (iVar1 < 6);
+  local_6 = 0;
+  iVar1 = strings_not_equal(local_c,"giants");
+  if (iVar1 != 0) {
+    explode_bomb();
+  }
+  return;
+}
+```
+
+Phase 5 takes in a string of length 6, takes the last hexadecimal digit using a mask `& 0xf`. Then, it maps that onto a table that is stored as a readonly global. We can extract it by going to its adress and doing a copy special in Ghidra. Which will give us this :
+
+```py
+c_map = b'\x69\x73\x72\x76\x65\x61\x77\x68\x6f\x62\x70\x6e\x75\x74\x66\x67'.decode()
+```
+All we need to is to reverse the process by figuring out string that outputs `giants`. There are multiple solutions to that, however, the hint shows us a lowercase character that gives us and it narrows it down to one ie. the hexadecimal numbers that start with 6 ie the characters ranger from '\`' to 'o'.
+
+We reverse map it to this range using the index.
+
+```py
+c_map = b'\x69\x73\x72\x76\x65\x61\x77\x68\x6f\x62\x70\x6e\x75\x74\x66\x67'.decode()
+p = 'giants'
+pass5 = ''
+for i in p :
+    index = c_map.find(i)
+    a = chr(ord('a') + index - 1)
+    pass5 += a
+r.sendline(pass5.encode())
+print(r.recv().decode())
+```
+
+And voila ! We get the password. Onto the next phase !
+
+## Phase 6
+
+*TODO : Envoyer la version avec les variables renommes et l'auto-typage applique*
+```c
+void phase_6(undefined4 param_1)
+{
+  int *piVar1;
+  int iVar2;
+  undefined1 *puVar3;
+  int *piVar4;
+  int iVar5;
+  undefined1 *local_38;
+  int *local_34;
+  int local_30 [5];
+  int local_1c [6];
+  
+  local_38 = node1;
+  read_six_numbers(param_1,local_1c);
+  iVar5 = 0;
+  do {
+    iVar2 = iVar5;
+    if (5 < local_1c[iVar5] - 1U) {
+      explode_bomb();
+    }
+    while (iVar2 = iVar2 + 1, iVar2 < 6) {
+      if (local_1c[iVar5] == local_1c[iVar2]) {
+        explode_bomb();
+      }
+    }
+    iVar5 = iVar5 + 1;
+  } while (iVar5 < 6);
+  iVar5 = 0;
+  do {
+    iVar2 = 1;
+    puVar3 = local_38;
+    if (1 < local_1c[iVar5]) {
+      do {
+        puVar3 = *(undefined1 **)(puVar3 + 8);
+        iVar2 = iVar2 + 1;
+      } while (iVar2 < local_1c[iVar5]);
+    }
+    local_30[iVar5 + -1] = (int)puVar3;
+    iVar5 = iVar5 + 1;
+  } while (iVar5 < 6);
+  iVar5 = 1;
+  piVar4 = local_34;
+  do {
+    piVar1 = (int *)local_30[iVar5 + -1];
+    piVar4[2] = (int)piVar1;
+    iVar5 = iVar5 + 1;
+    piVar4 = piVar1;
+  } while (iVar5 < 6);
+  piVar1[2] = 0;
+  iVar5 = 0;
+  do {
+    if (*local_34 < *(int *)local_34[2]) {
+      explode_bomb();
+    }
+    local_34 = (int *)local_34[2];
+    iVar5 = iVar5 + 1;
+  } while (iVar5 < 5);
+  return;
+```
+
+This one looks intimidating but really, it's quite straight forward :
+- It starts by reading six numbers separated by spaces and makes sure that it is between 1 and 6.
+- Then, it loops the first time to check for duplicates.
+- It loops again, to reorder a linked list stored as a global and constant by using our input as index and stores the values in an array.
+- It loops one last time, to check that the reordered array is in ascending order.
+
+## Secret phase
+
+The secret phase is only accessible under certain conditions that are found in the phase_defused function.
+
+```c
+void phase_defused(void)
+
+{
+  int iVar1;
+  undefined local_58 [4];
+  undefined local_54 [80];
+  
+  if (num_input_strings == 6) {
+    iVar1 = sscanf(input_strings + 0xf0,"%d %s",local_58,local_54);
+    if (iVar1 == 2) {
+      iVar1 = strings_not_equal(local_54,"austinpowers");
+      if (iVar1 == 0) {
+        printf("Curses, you\'ve found the secret phase!\n");
+        printf("But finding it and solving it are quite different...\n");
+        secret_phase();
+      }
+    }
+    printf("Congratulations! You\'ve defused the bomb!\n");
+  }
+  return;
+}
+```
+
+It seems that it goes back to the third string because 0xf0 / 0x50 which is the length of a value inside inputstring is 3. Which means that as we've seen in phase 4, we need to add the string austinpowers to the input.
+
+```c
+void secret_phase(void)
+
+{
+  undefined4 uVar1;
+  int iVar2;
+  
+  uVar1 = read_line();
+  iVar2 = __strtol_internal(uVar1,0,10,0);
+  if (1000 < iVar2 - 1U) {
+    explode_bomb();
+  }
+  iVar2 = fun7(n1,iVar2);
+  if (iVar2 != 7) {
+    explode_bomb();
+  }
+  printf("Wow! You\'ve defused the secret stage!\n");
+  phase_defused();
+  return;
+}
+```
+
+The secret phase takes in a long that needs to be over 1000. And then it passes it into func7 along with a global n1 that has to return 7.
+
+```c
+int fun7(int *param_1,int param_2)
+{
+  int iVar1;
+  
+  if (param_1 == (int *)0x0) {
+    iVar1 = -1;
+  }
+  else if (param_2 < *param_1) {
+    iVar1 = fun7(param_1[1],param_2);
+    iVar1 = iVar1 * 2;
+  }
+  else if (param_2 == *param_1) {
+    iVar1 = 0;
+  }
+  else {
+    iVar1 = fun7(param_1[2],param_2);
+    iVar1 = iVar1 * 2 + 1;
+  }
+  return iVar1;
+}
+```
+
+When, we look at function 7 by the look of it. It seems that this is probably an algorithm that does a search in a binary tree because the first conditions checks if our input is less then calls the function recursely to the params_1[2] which is probably the left right node, etc ...
+
+When looking for the first node, I found out that there are all stored in contiguous space inside the program. So I just dumped it using copy special and cast the values back into integers.
+
+```py
+n_offset = 0x804b278
+n_raw = b'\xe9\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x2f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x23\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x6b\x00\x00\x00\xb4\xb2\x04\x08\x78\xb2\x04\x08\x06\x00\x00\x00\xc0\xb2\x04\x08\x9c\xb2\x04\x08\x2d\x00\x00\x00\xcc\xb2\x04\x08\x84\xb2\x04\x08\x16\x00\x00\x00\x90\xb2\x04\x08\xa8\xb2\x04\x08\x32\x00\x00\x00\xf0\xb2\x04\x08\xd8\xb2\x04\x08\x08\x00\x00\x00\xe4\xb2\x04\x08\xfc\xb2\x04\x08\x24\x00\x00\x00\x14\xb3\x04\x08\x08\xb3\x04\x08'
+n = list()
+for i in range(0, len(n_raw), 12) :
+    value = int.from_bytes(n_raw[i:i+4], byteorder="little")
+    left = int.from_bytes(n_raw[i+4:i+8], byteorder="little") % n_offset
+    right = int.from_bytes(n_raw[i+8:i+12], byteorder="little") % n_offset
+    n.append((value, int(left / 12), int(right / 12)))
+print(n)
+```
+```text
+[(1001, 0, 0), (47, 0, 0), (20, 0, 0), (7, 0, 0), (35, 0, 0), (99, 0, 0), (1, 0, 0), (40, 0, 0), (107, 5, 0), (6, 6, 3), (45, 7, 1), (22, 2, 4), (50, 10, 8), (8, 9, 11), (36, 13, 12)]
+```
+The value 7 tells us that the algorithm does one right and two lefts. But we don't care because there is only one value over 1000 in the tree which is 1001.
+
+And voila, we have our input :
+```py
+n_offset = 0x804b278
+n_raw = b'\xe9\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x2f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x23\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x28\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x6b\x00\x00\x00\xb4\xb2\x04\x08\x78\xb2\x04\x08\x06\x00\x00\x00\xc0\xb2\x04\x08\x9c\xb2\x04\x08\x2d\x00\x00\x00\xcc\xb2\x04\x08\x84\xb2\x04\x08\x16\x00\x00\x00\x90\xb2\x04\x08\xa8\xb2\x04\x08\x32\x00\x00\x00\xf0\xb2\x04\x08\xd8\xb2\x04\x08\x08\x00\x00\x00\xe4\xb2\x04\x08\xfc\xb2\x04\x08\x24\x00\x00\x00\x14\xb3\x04\x08\x08\xb3\x04\x08'
+n = list()
+for i in range(0, len(n_raw), 12) :
+    value = int.from_bytes(n_raw[i:i+4], byteorder="little")
+    left = int.from_bytes(n_raw[i+4:i+8], byteorder="little") % n_offset
+    right = int.from_bytes(n_raw[i+8:i+12], byteorder="little") % n_offset
+    n.append((value, int(left / 12), int(right / 12)))
+print(n)
+secret_pass = str(1001)
+r.sendline(secret_pass.encode())
+print(r.recv().decode())
+```
+
+## Conclusion
+
+We reversed each step and found the values that did not trigger the bomb by "executing the code backwards". And voila. The full script is in bomb-solve.py
+BOMB.md
+15 Ko
