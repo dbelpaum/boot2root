@@ -573,25 +573,47 @@ void phase_5(int param_1)
 Phase 5 takes in a string of length 6, takes the last hexadecimal digit using a mask `& 0xf`. Then, it maps that onto a table that is stored as a readonly global. We can extract it by going to its adress and doing a copy special in Ghidra. Which will give us this :
 
 ```py
-c_map = b'\x69\x73\x72\x76\x65\x61\x77\x68\x6f\x62\x70\x6e\x75\x74\x66\x67'.decode()
+array_123 = "isrveawhobpnutfg"
 ```
-All we need to is to reverse the process by figuring out string that outputs `giants`. There are multiple solutions to that, however, the hint shows us a lowercase character that gives us and it narrows it down to one ie. the hexadecimal numbers that start with 6 ie the characters ranger from '\`' to 'o'.
+All we need to is to reverse the process by figuring out string that outputs `giants`. There are multiple solutions to that, however, the hint shows us a lowercase character, so we can assume and narrow down our search to only lowercase characters.
 
-We reverse map it to this range using the index.
+We can solve ths using the following python code:
 
 ```py
-c_map = b'\x69\x73\x72\x76\x65\x61\x77\x68\x6f\x62\x70\x6e\x75\x74\x66\x67'.decode()
-p = 'giants'
-pass5 = ''
-for i in p :
-    index = c_map.find(i)
-    a = chr(ord('a') + index - 1)
-    pass5 += a
-r.sendline(pass5.encode())
-print(r.recv().decode())
-```
+import itertools 
 
-And voila ! We get the password. Onto the next phase !
+def find_chars_for_index(index):
+    chars = []
+    for i in range(97, 123):
+        if (i & 0xf) == index:
+            chars.append(chr(i))
+    return chars
+
+def generate_all_solutions(target):
+    static_string = "isrveawhobpnutfg"
+    result_lists = []
+    
+    for char in target:
+        index = static_string.index(char)
+        result_lists.append(find_chars_for_index(index))
+    
+    all_combinations = list(itertools.product(*result_lists))
+    return [''.join(combination) for combination in all_combinations]
+
+target = "giants"
+solutions = generate_all_solutions(target)
+for solution in solutions:
+    print(solution)
+```
+Result:
+```
+$>python p5_bomb.py
+opekma
+opekmq
+opukma
+opukmq
+```
+And voila ! We get the passwords. Onto the next phase !
 
 #### Phase 6
 
@@ -827,4 +849,4 @@ Also we found different matching patterns for some steps, enhancing the unclearn
 
 With this password we can get access to the `thor` account and proceed to the next step.
 
-# thor's account
+## thor's account
