@@ -850,3 +850,81 @@ Also we found different matching patterns for some steps, enhancing the unclearn
 With this password we can get access to the `thor` account and proceed to the next step.
 
 ## thor's account
+
+Once again, we find the next challenge in the user's home.
+
+There is a README telling us to find the password to access the user `zaz` and a text file `turtle`.
+
+It contains movement instructions for a turtle, so we can suppose we are going to need to draw its path to find the password.
+
+We can write a simple python script using the `turtle` library to draw the path.
+
+```py
+import turtle
+import re
+
+t = turtle.Turtle()
+
+screen = turtle.Screen()
+screen.bgcolor("white")
+t.speed(10)
+
+t.penup()
+t.goto(0, 0)
+t.pendown()
+
+def execute_instructions(instructions):
+    for line in instructions.splitlines():
+        match = re.match(r"(Avance|Recule) (\d+) spaces", line)
+        if match:
+            move_type = match.group(1)
+            distance = int(match.group(2))
+            if move_type == "Avance":
+                t.forward(distance)
+            elif move_type == "Recule":
+                t.backward(distance)
+            continue
+
+        match = re.match(r"Tourne (gauche|droite) de (\d+) degrees", line)
+        if match:
+            turn_direction = match.group(1)
+            degrees = int(match.group(2))
+            if turn_direction == "gauche":
+                t.left(degrees)
+            elif turn_direction == "droite":
+                t.right(degrees)
+            continue
+
+with open('input', 'r') as f:
+    instructions = f.read()
+execute_instructions(instructions)
+
+turtle.done()
+```
+
+We get the following drawing by the turtle:
+
+![alt text](ressources/image-7.png)
+
+We can read the word `SLASH`
+
+The hint from the README tells us: ` Can you digest the message ?`
+
+It is a direct reference to the md5 hashing algorithm `Message Digest 5`.
+
+We can then get the password by hashing the word `SLASH` with md5.
+
+```bash
+echo -n "SLASH" | md5sum
+646da671ca01bb5d84dbb5fb2238dc8e
+```
+
+We switch to the user zaz with the password `646da671ca01bb5d84dbb5fb2238dc8e`
+
+## zaz's account
+
+Again, the challenge is located in the user's home.
+
+![alt text](ressources/image-8.png)
+
+We find an empty `mail` folder and a 
