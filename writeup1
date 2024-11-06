@@ -248,9 +248,9 @@ We can now connect to laurie account by ssh after hashing `Iheartpwnage` with `e
 
 On her home we find a `bomb` binary file and a `README` telling us to defuse the bomb in order to connect to the user `thor`
 
-# BOMB Reversing Writeup
+### BOMB Reversing
 
-We first use ghidra to give the pseudo C that'll make it easier for us.
+We first use `ghidra` to give the pseudo C that'll make it easier for us.
 Then, we are presented with a main with what seems to be 6 inputs that needs to be validated by 6 functions,
 
 Here :
@@ -308,7 +308,7 @@ int main(int argc,char **argv)
 }
 ```
 
-# Phase 1
+#### Phase 1
 
 The first phase is straight forward as it just compares the input with a string `Public speaking is very easy.`
 
@@ -341,7 +341,7 @@ print(r.recv().decode())
 
 We get a positive response and we're allowed to move on to phase 2.
 
-## Phase 2
+#### Phase 2
 
 ```c
 void phase_2(undefined4 param_1)
@@ -382,10 +382,11 @@ print(pass2)
 r.sendline(pass2.encode())
 print(r.recv().decode())
 ```
+This gives us the list `1 2 6 24 120 720`
 
 Good, onto the next phase.
 
-## Phase 3
+#### Phase 3
 
 ```c
 void phase_3(char *param_1)
@@ -465,7 +466,22 @@ Phase 3 is straightforward. We have to choose to figure out the input and the fl
 - cVar2 has to be equal to local_9 (second argument)
 - Depending on local_10 (first agument), local_8 has to be equal to a certain value.
 
-There are multiple solutions but we'll stick with the outcome when we chose 1 has first argument which will give us `1 b 214`.
+We can break it down do this small code:
+```c
+iVar1 = sscanf(param_1,"%d %c %d",&local_10,&local_9,&local_8);
+switch(local_10){
+  case 1:
+      cVar2 = 'b';
+      if (local_8 != 0xd6) {
+        explode_bomb();
+      }
+      break;
+}
+if (cVar2 != local_9) {
+    explode_bomb();
+}
+```
+There are multiple solutions but we'll stick with the outcome when we chose 1 as the first argument which will give us `1 b 214`.
 
 ```py
 pass3 = f'{1} {"b"} {0xd6}'
@@ -475,7 +491,7 @@ print(r.recv().decode())
 
 Onto the next phase.
 
-## Phase 4
+#### Phase 4
 
 ```c
 void phase_4(char *param_1)
@@ -526,7 +542,7 @@ print(r.recv().decode())
 
 We put austinpowers because of the last step which we'll get to later. Onto the next one.
 
-## Phase 5
+#### Phase 5
 
 ```c
 void phase_5(int param_1)
@@ -577,7 +593,7 @@ print(r.recv().decode())
 
 And voila ! We get the password. Onto the next phase !
 
-## Phase 6
+#### Phase 6
 
 *TODO : Envoyer la version avec les variables renommes et l'auto-typage applique*
 ```c
@@ -647,7 +663,7 @@ This one looks intimidating but really, it's quite straight forward :
 - It loops again, to reorder a linked list stored as a global and constant by using our input as index and stores the values in an array.
 - It loops one last time, to check that the reordered array is in ascending order.
 
-## Secret phase
+#### Secret phase
 
 The secret phase is only accessible under certain conditions that are found in the phase_defused function.
 
@@ -768,4 +784,47 @@ BOMB.md
 
 ## Solving the Password
 
-The README we found in 
+The README we found in laurie's home indicates the following:
+```
+Diffuse this bomb!
+When you have all the password use it as "thor" user with ssh.
+
+HINT:
+P
+ 2
+ b
+
+o
+4
+
+NO SPACE IN THE PASSWORD (password is case sensitive).
+```
+
+We suppose that the password is the concatenation of the passwords we found in the previous phases.
+
+The hint from the README should help us to know the order of the passwords.
+
+We also need to remove the spaces.
+
+After trying and tweaking around different combinations, we found the password to be : `Publicspeakingisveryeasy.126241207201b2149opekmq426135`
+
+This password matches the hint line by line:
+
+`P`ublicspeakingisveryeasy.
+
+1`2`624120720
+
+1`b`214
+
+9
+
+`o`pekmq
+
+`4`26135
+
+> We are not so sure yet why there is a secret phase in the bomb since it is not required in the password, we think the school subject is wrong and unclear on this part.
+Also we found different matching patterns for some steps, enhancing the unclearness of the subject.
+
+With this password we can get access to the `thor` account and proceed to the next step.
+
+# thor's account
