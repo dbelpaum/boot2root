@@ -908,7 +908,7 @@ We get the following drawing by the turtle:
 
 We can read the word `SLASH`
 
-The hint from the README tells us: ` Can you digest the message ?`
+The hint from the end of the file tells us: ` Can you digest the message ?`
 
 It is a direct reference to the md5 hashing algorithm `Message Digest 5`.
 
