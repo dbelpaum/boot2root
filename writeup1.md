@@ -1009,23 +1009,23 @@ ASLR is basically so that the offset of the stack is randomized. This means that
 
 Since there is no security at all, there are multiple techniques but we'll use a basic exploitation technique which consists of overwriting the return instruction pointer (RIP) so that it points to an executable sections of the code that we control. To understand, what that is, we need to understand how functions are called and it is quite simple.
 
-A function call is just a JUMP instruction with extra steps. Before, we "jump" to our function using CALL, our program needs to remember where it was in order to return there when the function is done. In order, to do that it uses a stack which stores thoses adresses and it's convenient that it is a stack because the last address from the last function call will be accesible from a simple POP.
+A function call is just a JUMP instruction with extra steps. Before, we "jump" to our function using CALL, our program needs to remember where it was in order to return there when the function is done. In order, to do that it uses a call stack which stores those adresses (as well as local variables and arguments) and it's convenient that it is a stack because the last address from the last function call will be accesible from a simple POP.
 
 So when, we call a function 3 things happen :
-- The program pushes the address that points to the next instruction onto the stack.
+- The program pushes the address that points to the next instruction onto the call stack (aswell as args and local vars).
 - Then the program jumps to the function
-- When the function is finished, it'll call RET which will pop the address and go there.
+- When the function is finished, it'll call RET which will pop the address and go back to where it was.
 
 So our goal is just to rewrite the top of that stack so that when it calls RET, it actually points to the start of our buffer that'll contain our shellcode and it is executable.
 
 TLDR :
 - Write the shellcode
-- Overwrite the RIP to pointer to that shellcode
-- And enjoy the root
+- Overwrite the RIP to point to that shellcode
+- And enjoy the root access
 
 ### The exploit
 
-In order to find the offset of the stack of return pointer adresses, we'll use GDB because it's installed on the victim's machine and we'll throw things until we see what sticks.
+In order to find the offset of the call stack of the RIP, we'll use GDB because it's installed on the victim's machine and we'll throw things until we see what sticks.
 
 And we throw at it, 143 characters and yep what we're trying to overwrite is right after our buffer.
 ```text
@@ -1049,7 +1049,7 @@ So our payload easy peasy, it shoud look like this :
 SHELLCODE + PADDING + ADDRESS OF THE BUFFER
 ```
 
-This script contains generates our payload which will be stored in a `payload` file :
+This script generates our payload which will be stored in a `payload` file :
 
 ```py
 addr = b"\xbf\xff\xf8\x98"[::-1]
