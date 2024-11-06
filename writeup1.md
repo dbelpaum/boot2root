@@ -1,3 +1,34 @@
+# Table of contents
+
+- [Table of contents](#table-of-contents)
+- [Network Setup](#network-setup)
+- [Analysis of available services on Boot2Root](#analysis-of-available-services-on-boot2root)
+- [Services Lookaround](#services-lookaround)
+  - [Http Service Analysis](#http-service-analysis)
+  - [Https Service Analysis](#https-service-analysis)
+- [Forum Post with command history](#forum-post-with-command-history)
+- [Laurie's Account](#lauries-account)
+- [Setting up a reverse shell](#setting-up-a-reverse-shell)
+- [Privilege Escalation](#privilege-escalation)
+  - [www-data](#www-data)
+  - [lmezard](#lmezard)
+  - [laurie](#laurie)
+    - [BOMB Reversing](#bomb-reversing)
+      - [Phase 1](#phase-1)
+      - [Phase 2](#phase-2)
+      - [Phase 3](#phase-3)
+      - [Phase 4](#phase-4)
+      - [Phase 5](#phase-5)
+      - [Phase 6](#phase-6)
+      - [Secret phase](#secret-phase)
+    - [Conclusion](#conclusion)
+    - [Solving the Password](#solving-the-password)
+  - [thor's account](#thors-account)
+  - [zaz's account](#zazs-account)
+    - [The plan](#the-plan)
+    - [The exploit](#the-exploit)
+
+
 # Network Setup
 Configure the adapter 2 of the Boot2Root VM to Host-Only on the `vboxnet0` interface.  
 > If you want to use another VM like Kali, do the same on that one.  
@@ -798,13 +829,13 @@ r.sendline(secret_pass.encode())
 print(r.recv().decode())
 ```
 
-## Conclusion
+### Conclusion
 
 We reversed each step and found the values that did not trigger the bomb by "executing the code backwards". And voila. The full script is in bomb-solve.py
 BOMB.md
 15 Ko
 
-## Solving the Password
+### Solving the Password
 
 The README we found in laurie's home indicates the following:
 ```
@@ -974,7 +1005,7 @@ zaz@BornToSecHackMe:~$ cat /proc/sys/kernel/randomize_va_space
 
 ASLR is basically so that the offset of the stack is randomized. This means that if we were to overwrite an address so that it points somewhere we want we wouldn't need to leak any address. We can just try using a debugger such as gdb and use that same offset.
 
-## The plan
+### The plan
 
 Since there is no security at all, there are multiple techniques but we'll use a basic exploitation technique which consists of overwriting the return instruction pointer (RIP) so that it points to an executable sections of the code that we control. To understand, what that is, we need to understand how functions are called and it is quite simple.
 
@@ -992,7 +1023,7 @@ TLDR :
 - Overwrite the RIP to pointer to that shellcode
 - And enjoy the root
 
-## The exploit
+### The exploit
 
 In order to find the offset of the stack of return pointer adresses, we'll use GDB because it's installed on the victim's machine and we'll throw things until we see what sticks.
 
