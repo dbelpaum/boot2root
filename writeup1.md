@@ -649,64 +649,66 @@ And voila ! We get the passwords. Onto the next phase !
 #### Phase 6
 
 ```c
-void phase_6(undefined4 param_1)
+void phase_6(char *param_1)
+
 {
-  int *piVar1;
-  int iVar2;
-  undefined1 *puVar3;
-  int *piVar4;
-  int iVar5;
-  undefined1 *local_38;
-  int *local_34;
-  int local_30 [5];
-  int local_1c [6];
+  astruct_1 *paVar1;
+  astruct *current_node1;
+  astruct_1 *current_node2;
+  int i;
+  undefined1 *unordered_deque;
+  astruct_1 *ordered_deque;
+  int array [5];
+  int 6numbers [6];
+  int j;
   
-  local_38 = node1;
-  read_six_numbers(param_1,local_1c);
-  iVar5 = 0;
+  unordered_deque = node1;
+  read_six_numbers(param_1,6numbers);
+  i = 0;
   do {
-    iVar2 = iVar5;
-    if (5 < local_1c[iVar5] - 1U) {
+    j = i;
+    if (5 < 6numbers[i] - 1U) {
       explode_bomb();
     }
-    while (iVar2 = iVar2 + 1, iVar2 < 6) {
-      if (local_1c[iVar5] == local_1c[iVar2]) {
+    while (j = j + 1, j < 6) {
+      if (6numbers[i] == 6numbers[j]) {
         explode_bomb();
       }
     }
-    iVar5 = iVar5 + 1;
-  } while (iVar5 < 6);
-  iVar5 = 0;
+    i = i + 1;
+  } while (i < 6);
+  i = 0;
   do {
-    iVar2 = 1;
-    puVar3 = local_38;
-    if (1 < local_1c[iVar5]) {
+    j = 1;
+    current_node1 = (astruct *)unordered_deque;
+    if (1 < 6numbers[i]) {
       do {
-        puVar3 = *(undefined1 **)(puVar3 + 8);
-        iVar2 = iVar2 + 1;
-      } while (iVar2 < local_1c[iVar5]);
+        current_node1 = (astruct *)current_node1->next;
+        j = j + 1;
+      } while (j < 6numbers[i]);
     }
-    local_30[iVar5 + -1] = (int)puVar3;
-    iVar5 = iVar5 + 1;
-  } while (iVar5 < 6);
-  iVar5 = 1;
-  piVar4 = local_34;
+    array[i + -1] = (int)current_node1;
+    i = i + 1;
+  } while (i < 6);
+  i = 1;
+  current_node2 = ordered_deque;
   do {
-    piVar1 = (int *)local_30[iVar5 + -1];
-    piVar4[2] = (int)piVar1;
-    iVar5 = iVar5 + 1;
-    piVar4 = piVar1;
-  } while (iVar5 < 6);
-  piVar1[2] = 0;
-  iVar5 = 0;
+    paVar1 = (astruct_1 *)array[i + -1];
+    current_node2->next = (int *)paVar1;
+    i = i + 1;
+    current_node2 = paVar1;
+  } while (i < 6);
+  paVar1->next = (int *)0x0;
+  i = 0;
   do {
-    if (*local_34 < *(int *)local_34[2]) {
+    if (*(int *)ordered_deque < *ordered_deque->next) {
       explode_bomb();
     }
-    local_34 = (int *)local_34[2];
-    iVar5 = iVar5 + 1;
-  } while (iVar5 < 5);
+    ordered_deque = (astruct_1 *)ordered_deque->next;
+    i = i + 1;
+  } while (i < 5);
   return;
+}
 ```
 
 This one looks intimidating but really, it's quite straight forward :
