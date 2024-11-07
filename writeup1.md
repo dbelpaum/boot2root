@@ -648,7 +648,6 @@ And voila ! We get the passwords. Onto the next phase !
 
 #### Phase 6
 
-*TODO : Envoyer la version avec les variables renommes et l'auto-typage applique*
 ```c
 void phase_6(undefined4 param_1)
 {
